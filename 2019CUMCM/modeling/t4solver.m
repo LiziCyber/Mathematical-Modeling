@@ -1,0 +1,59 @@
+clear
+load t4data2.mat
+%总数据特征
+b=0.55067976718861;
+Y=a(:,1);
+T=a(:,2);
+EYA=mean(Y);
+ETA=mean(T);
+d=Inf;
+t=0;
+n=5;
+c=32.7302/60;
+pt=[];
+pd=[];
+sumsrt=0;
+while(t<45)
+
+    %%
+    %长短途特征
+    srt=T<t;
+    lng=(T>=t);
+    EYS=mean(Y(srt));
+    ETS=mean(T(srt));
+    EYL=mean(Y(lng));
+    ETL=mean(T(lng));
+    if(sum(srt)==sumsrt)
+        t=t+1/60;
+        continue;
+    end
+    sumsrt=sum(srt);
+    %%
+    %等待时间ws=getws();
+    lambda=sum(srt)*48614/2219/24/60;
+    mu=1/c;
+    rho=lambda/(n*mu);
+    P0=0;
+    for k=0:n-1
+        P0=P0+(lambda/mu)^k/factorial(k);
+    end
+    P0=P0+(lambda/mu)^n/(1-rho)/factorial(n);
+    P0=1/P0;
+    ws=(n*rho)^n*rho/lambda/(1-rho)^2/factorial(n)*P0+1/mu;
+    %%
+    %主要搜索程序
+    left=EYS+EYA;
+    right=EYL+b*(2*ETS+ETA-ETL+ws);
+    if(isnan(right))
+        break
+    end
+    pd(size(pd,2)+1)=abs(left-right);
+    pt(size(pt,2)+1)=t;
+    if(abs(left-right)<d)
+        d=abs(left-right);
+        curt=t;
+    end
+    t=t+1/60;
+end
+%绘制图形观察
+plot(2.*pt,pd)
